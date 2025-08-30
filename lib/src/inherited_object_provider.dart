@@ -99,8 +99,6 @@ abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProv
   Widget build(BuildContext context) {
     Timer.run(() => _objectNotifier.value = _object);
 
-    // Widget child = _child ??= _buildDependencies(widget.child!);
-
     return InheritedObject<T>(
       object: _object,
       provider: this,
