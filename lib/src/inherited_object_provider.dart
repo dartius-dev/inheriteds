@@ -14,8 +14,11 @@ abstract class InheritedObjectProvider<T> extends StatefulWidget {
 
   const InheritedObjectProvider({super.key, this.child});
 
-  InheritedProvider<T> copyWithChild(Widget child);
+  InheritedObjectProvider<T> copyWithChild(Widget child);
 
+  static P? of<T, P extends InheritedObjectProviderState<T>>(BuildContext context) 
+      => maybeOf<T, P>(context)!;
+      
   static P? maybeOf<T, P extends InheritedObjectProviderState<T>>(BuildContext context) {
     if (
       context.getElementForInheritedWidgetOfExactType<InheritedObject<T>>()?.widget 
@@ -36,19 +39,15 @@ abstract class InheritedObjectProvider<T> extends StatefulWidget {
 abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProvider<T>> {
 
   late final InheritedHubState? _hub;
-  late final ValueNotifier<T?> _objectNotifier = ValueNotifier<T?>(widget.initialObject);
   late T _object = widget.initialObject;
-
   Type get _type => T;
 
   Widget get child => widget.child!;
 
-  bool get hasObject => _object != null;
+  T get object => _object;
+
+  ChangeNotifier get notifier;
   
-  T? get maybeObject => _object;
-
-  ChangeNotifier get notifier => _objectNotifier;
-
   @override
   void initState() {
     assert(widget.child != null, "${widget}(${widget.initialObject}) must have a child widget");
@@ -74,7 +73,7 @@ abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProv
   @override
   void didUpdateWidget(InheritedObjectProvider<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialObject != widget.initialObject) {
+    if (oldWidget.initialObject != widget.initialObject && _object != widget.initialObject) {
       setObject(widget.initialObject, forceBuild: false);
     }
     if (oldWidget.hubEntry != widget.hubEntry) {
@@ -88,16 +87,20 @@ abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProv
   }
 
   @protected
-  void setObject(T object, {bool forceBuild = true}) {
-    if (_object == object) return;
+  bool setObject(T object, {bool forceBuild = true}) {
+    if (_object == object) return false;
     _object = object;
     _hub?._onChanged(this);
     if (forceBuild) setState(() {});
+    return true;
   }
+
+  @protected
+  void notify(T object);
 
   @override
   Widget build(BuildContext context) {
-    Timer.run(() => _objectNotifier.value = _object);
+    Timer.run(() => notify(_object));
 
     return InheritedObject<T>(
       object: _object,

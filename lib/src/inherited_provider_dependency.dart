@@ -93,7 +93,7 @@ class _ProviderDependencyState<TO, TD> extends DependencyState<TD, ProviderDepen
   @override
   void updateDependency(TD? value) {
     super.updateDependency(value);
-    Timer.run(() => widget._provider!.setObject(widget.update(widget._provider!.maybeObject, value)));
+    widget._provider!.setObject(widget.update(widget._provider!.object, value));
   }
 
   @override

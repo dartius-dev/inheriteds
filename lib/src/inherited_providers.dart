@@ -2,7 +2,7 @@
 part of 'inherited_object.dart';
 
 class InheritedProviders extends StatelessWidget {
-  final List<InheritedProvider> providers;
+  final List<InheritedObjectProvider> providers;
   final Widget child;
   const InheritedProviders({super.key, required this.providers, required this.child});
 

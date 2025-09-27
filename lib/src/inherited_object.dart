@@ -59,7 +59,7 @@ class InheritedObject<T> extends InheritedWidget {
     return InheritedHub._find(context)?.entries[T]?.object as T?;
   }
 
-  static T? maybeOf<T extends Object>(BuildContext context, {ObjectWatchCallback? watch, Object? watchId}) {
+  static T? maybeOf<T extends Object>(BuildContext context, {ObjectWatchCallback<T>? watch, Object? watchId}) {
     ObjectAspect<T>? aspect = watch != null ? ObjectAspect<T>(watch: watch, id: watchId) : null;
     return _maybeOf<T>(context, aspect);
   }
@@ -71,7 +71,7 @@ class InheritedObject<T> extends InheritedWidget {
     return aspect.valueOf(_maybeOf<T>(context, aspect));
   }
 
-  static T  of<T extends Object>(BuildContext context, {ObjectWatchCallback? watch, Object? watchId}) 
+  static T  of<T extends Object>(BuildContext context, {ObjectWatchCallback<T>? watch, Object? watchId}) 
     => maybeOf<T>(context, watch: watch, watchId: watchId)!;
 
   static V valueOf<V,T extends Object>(BuildContext context, {
@@ -95,7 +95,7 @@ class InheritedObject<T> extends InheritedWidget {
 
   bool shouldNotify(InheritedObject<T> oldWidget, [AObjectAspect? aspect]) {
     return aspect!=null 
-      ? !Equalone.equals(aspect(object), aspect(oldWidget.object))
+      ? !Equalone.deepEquals(aspect(object), aspect(oldWidget.object))
       : object!=oldWidget.object;
   }
 
@@ -130,10 +130,10 @@ class InheritedObjectElement<T> extends InheritedElement {
           _newFrame = false;
           WidgetsBinding.instance.addPostFrameCallback((_) => _newFrame = true);
         }
-        final prev = dependencies?.skipWhile((e)=>e==aspect).firstOrNull as _DebugObjectAspect?;
+        final prev = dependencies?.skipWhile((e)=>e!=aspect).firstOrNull as _DebugObjectAspect?;
         if(prev==aspect && prev!.frame==_frameCount) {
-          throw FlutterError(
-            '${aspect.runtimeType}${switch(aspect){ final ObjectAspectMixin e => '.id=${e.id}', _=>''}} is already registered in the same frame. '
+          throw ObjectAspectError(
+            '${aspect.runtimeType}${switch(aspect){ final ObjectAspectMixin e => '(id=${e.id})', _=>''}} is already registered in the same frame. '
           );
         }
         aspect = _DebugObjectAspect(aspect!, _frameCount);
@@ -247,3 +247,15 @@ mixin ObjectAspectMixin<T extends Object> on AObjectAspect<T> {
   Object? call(T? object) => watch?.call(object);
 }
 
+///
+///
+///
+class ObjectAspectError extends Error {
+  final String message;
+  ObjectAspectError(this.message);
+
+  @override
+  String toString() {
+    return "ObjectAspectError: $message";
+  }  
+}

@@ -73,7 +73,7 @@ class HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
-        leadingWidth: 100,
+        leadingWidth: 130,
         leading: TextButton(
           onPressed: () => launchUrl(Uri.parse(pubDevProject)),
           child: Column(

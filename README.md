@@ -1,4 +1,5 @@
 # inheriteds
+![pub version](https://img.shields.io/pub/v/inheriteds)
 [![live demo](https://github.com/dartius-dev/inheriteds/raw/main/example/livedemo.svg)](https://dartius-dev.github.io/inheriteds/)
 [![example](https://github.com/dartius-dev/inheriteds/raw/main//example/example.svg)](https://github.com/dartius-dev/inheriteds/blob/main/example/)
 
@@ -66,12 +67,15 @@ import 'package:inheriteds/inheriteds.dart';
       - [Static Methods for Access](#static-methods-for-access)
       - [Static Methods for Safe Access](#static-methods-for-safe-access)
       - [Why is this better than aspect?](#why-is-this-better-than-aspect)
+      - [`watchId` — what is it?](#watchid--what-is-it)
     - [InheritedProvider](#inheritedprovider)
       - [Static Methods](#static-methods)
+      - [Provider's `notifier`](#providers-notifier)
     - [InheritedProviders](#inheritedproviders)
     - [InheritedHub](#inheritedhub)
       - [When does this really matter?](#when-does-this-really-matter)
     - [ProviderDependency](#providerdependency)
+    - [InheritedDataProvider](#inheriteddataprovider)
     - [InheritedObjectProvider](#inheritedobjectprovider)
   - [Additional information](#additional-information)
   - [License](#license)
@@ -132,7 +136,7 @@ Just provide an immutable object, and `InheritedObject` takes care of notifying 
 
   return InheritedObject(
     object: const User(name: "Bob", age: 21),
-    child: CounterWidget(),
+    child: child,
   );
 ```
 
@@ -142,7 +146,9 @@ Access the object anywhere below:
   final user = InheritedObject.of<User>(context);
 ```
 
-This approach works well for managing local state or in simple scenarios ([see example](https://github.com/dartius-dev/inheriteds/blob/main/example/lib/counters/inherited_object_counter_screen.dart)). However, as your app grows or requires more advanced state management, using `InheritedObject` directly can become verbose and repetitive. For most practical cases — especially when you want to reduce manual wiring and boilerplate—it's recommended to use `InheritedProvider`.
+This approach works well for managing local state or in simple scenarios ([see example](https://github.com/dartius-dev/inheriteds/blob/main/example/lib/counters/inherited_object_counter_screen.dart)). However, as your app grows or requires more advanced state management, using `InheritedObject` directly can become verbose and repetitive. 
+
+For most practical cases — especially when you want to reduce manual wiring and boilerplate—it's recommended to use `InheritedProvider`.
 
 [InheritedProvider](#inheritedprovider) streamlines state sharing and updates throughout your widget tree, making your code cleaner and easier to maintain.
 
@@ -159,7 +165,7 @@ These methods allow you to choose between reactive (with rebuilds) and non-react
 
 #### Static Methods for Safe Access
 
-Inheriteds provides several methods for safely accessing objects and values that may not be present in the widget tree. These methods return `null` if the requested object or value is not found, helping you avoid runtime errors:
+`InheritedObject` provides several methods for safely accessing objects and values that may not be present in the widget tree. These methods return `null` if the requested object or value is not found, helping you avoid runtime errors:
 
 - `InheritedObject.maybeOf<T>(context)`: Returns the nearest object of type `T` if available, or `null` if not found. Establishes a dependency if the object exists.
 - `InheritedObject.maybeValueOf<V, T>(context, value: (obj) => ...)`: Safely selects a value from the object of type `T`, returning `null` if the object is not found.
@@ -190,6 +196,48 @@ final above = InheritedObject.valueOf<int, ShopOrder>(
 
 This pattern helps you optimize performance and keep your UI responsive, especially in large apps with complex state graphs.
 
+#### `watchId` — what is it?
+
+Consider this example:
+
+```dart
+Widget build(context) {
+  final name = InheritedObject.of<User>(context, watch: (u) => u!.name).name;
+  final age = InheritedObject.of<User>(context, watch: (u) => u!.age).age;
+  ...
+}
+```
+
+This code will result in an error:
+
+> ObjectAspectError: ObjectAspect<User>(id=null) is already registered in the same frame.
+
+Why does this happen?
+
+In this example, we are trying to create two dependencies with different `watch` conditions in the same `context`. `InheritedObject` cannot automatically distinguish between these `watch` functions, so this error occurs.
+
+To avoid this error, you should help `InheritedObject` identify each `watch` by assigning a unique `watchId` for each dependency:
+
+```dart
+Widget build(context) {
+  final name = InheritedObject.of<User>(context, watch: (u) => u!.name, watchId:'A').name;
+  final age = InheritedObject.of<User>(context, watch: (u) => u!.age, watchId:'B').age;
+  ...
+}
+```
+
+There is no need to do this for different `BuildContext` instances:
+```dart
+Widget build(context) {
+  final name = InheritedObject.of<User>(context, watch: (u) => u!.name).name;
+  return Builder(builder: (context) {
+    final age = InheritedObject.of<User>(context, watch: (u) => u!.age,).age;
+    ...;
+  });
+}
+```
+
+> ObjectAspectError: ObjectValueAspect<num, ShopOrder>(id=null) is already registered in the same frame.
 
 ### InheritedProvider
 
@@ -237,6 +285,30 @@ This approach is recommended for most real-world apps, as it keeps your code cle
 
 These methods make it easy to interact with providers anywhere in your widget tree, enabling safe access, updates, and custom fallback logic.
 
+#### Provider's `notifier`
+
+`InheritedProviderState` exposes a `notifier` property, which is a `ChangeNotifier` that you can use to listen for updates to the provided object. This allows you to react to changes and trigger side effects in your project whenever the state managed by the provider changes.
+
+You can access the `notifier` of `InheritedProviderState` by calling `InheritedProvider.of`:
+
+```dart
+final notifier = InheritedProvider.of<User>(context).notifier;
+```
+
+You can then add listeners to the notifier:
+
+```dart
+notifier.addListener(() {
+  // Respond to updates, e.g., refresh data or trigger animations
+});
+```
+
+**Benefits:**
+
+- Direct access to a `ChangeNotifier` for listening to updates
+- Enables custom reactions and side effects on state changes
+
+This approach provides a flexible way to observe and respond to state changes managed by `InheritedProvider`, making it easy to integrate with existing Flutter patterns.
 
 ### InheritedProviders
 
@@ -299,7 +371,7 @@ Entry point: Wrap your app with InheritedHub to enable global provider registrat
   );
 ```
 
-Deep in the widget tree: Register a provider with hubEntry: true to make it globally accessible.
+Deep in the widget tree: Register a provider with `hubEntry: true` to make it globally accessible.
 ```dart
   InheritedProvider<User>(
     initialObject: const User(name: "Bob", age: 21),
@@ -372,9 +444,38 @@ Now, whenever the `ShopPrice` object is updated, the `ShopOrder` object will be 
 
 > `ProviderDependency` is built on top of the `dependents` package. Explore all its features and usage scenarios in the [`dependents` package documentation](https://pub.dev/packages/dependents).
 
+
+### InheritedDataProvider
+
+`InheritedDataProvider` is a flexible foundation for building your own specialized providers. While it can be used as a read-only provider for exposing inherited data, it also supports advanced features such as registration in `InheritedHub` and updates triggered by configured dependencies.
+
+- Extend to create custom provider widgets with specialized logic
+- Use as a read-only provider for immutable or reactive data
+- Register in `InheritedHub` for global access
+- Enable updates via dependency chains, even if direct updates are disabled
+
+For simple scenarios, you can wrap your widget tree with `InheritedDataProvider`:
+
+```dart
+InheritedDataProvider<User>(
+  initialObject: const User(name: "Bob", age: 21),
+  child: child,
+)
+```
+
+Access the object anywhere below the provider:
+
+```dart
+final user = InheritedObject.of<User>(context);
+```
+
+You can also register the provider in `InheritedHub` for global access, or configure dependencies to allow updates based on changes in other objects—even if the provider itself is read-only.
+
+Extend `InheritedDataProvider` when you need full control over provider behavior, registration, and update logic for advanced state management patterns.
+
 ### InheritedObjectProvider
 
-While `InheritedProvider` covers most use cases, sometimes you need a custom provider with specialized logic for object creation, updates, or registration. The `InheritedObjectProvider` base class lets you build your own provider widgets, giving you full control over how objects are managed and exposed to the widget tree.
+While `InheritedProvider` and `InheritedDataProvider` covers most use cases, sometimes you need a custom provider with specialized logic for object creation, updates, or registration. The `InheritedObjectProvider` base class lets you build your own provider widgets, giving you full control over how objects are managed and exposed to the widget tree.
 
 Key features:
 - Extend to implement custom state management or registration logic
@@ -383,8 +484,6 @@ Key features:
 - Enforce invariants or side effects during state changes
 
 Use `InheritedObjectProvider` when you need advanced behaviors that go beyond the default provider’s capabilities.
-
-
 
 
 
