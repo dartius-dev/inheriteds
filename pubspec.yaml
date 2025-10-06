@@ -1,6 +1,6 @@
 name: inheriteds
 description: "State management solution focused on simplifying dependency injection and object propagation throughout widget trees"
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/dartius-dev/inheriteds
 repository: https://github.com/dartius-dev/inheriteds
 issue_tracker: https://github.com/dartius-dev/inheriteds/issues

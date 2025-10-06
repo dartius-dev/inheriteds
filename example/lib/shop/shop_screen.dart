@@ -25,7 +25,7 @@ class ShopScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InheritedProviders(providers: [
+    return InheritedProviders([
         InheritedProvider<ShopPrice>(
           initialObject: const ShopPrice({'Apple': 100, 'Banana': 50, 'Orange': 70})
         ),

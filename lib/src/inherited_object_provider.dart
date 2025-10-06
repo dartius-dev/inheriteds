@@ -1,6 +1,7 @@
 
 part of 'inherited_object.dart';
 
+
 ///
 ///
 ///
@@ -32,11 +33,18 @@ abstract class InheritedObjectProvider<T> extends StatefulWidget {
   }
 }
 
+///
+///
+///
+abstract class AInheritedObjectProvider<T> {
+
+}
+
 
 ///
 ///
 ///
-abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProvider<T>> {
+abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProvider<T>> implements AInheritedObjectProvider<T> {
 
   late final InheritedHubState? _hub;
   late T _object = widget.initialObject;

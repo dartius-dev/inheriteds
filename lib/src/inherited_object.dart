@@ -41,13 +41,13 @@ typedef ValueWatchCallback<V, T extends Object> = V? Function(T? widget);
 class InheritedObject<T> extends InheritedWidget {
 
   final T object;
-  final InheritedObjectProviderState<T>? provider;
+  final AInheritedObjectProvider<T>? provider;
 
   const InheritedObject({
     super.key,
     required this.object,
     this.provider,
-    required super.child,
+    super.child = const SizedBox.shrink(),
   });
 
   static T get<T extends Object>(BuildContext context) => find<T>(context)!;
@@ -95,13 +95,42 @@ class InheritedObject<T> extends InheritedWidget {
 
   bool shouldNotify(InheritedObject<T> oldWidget, [AObjectAspect? aspect]) {
     return aspect!=null 
-      ? !Equalone.deepEquals(aspect(object), aspect(oldWidget.object))
+      ? !Equalone.deepEquals(aspect(oldWidget.object), aspect(object))
       : object!=oldWidget.object;
   }
 
   @override
-  InheritedObjectElement<T> createElement() => InheritedObjectElement<T>(this);  
+  InheritedObjectElement<T> createElement() => InheritedObjectElement<T>(this);
+
+  
+  InheritedObject<T> _copyWithChild(Widget child) {
+    return InheritedObject<T>(
+      key: key,
+      object: object,
+      provider: provider,
+      child: child,
+    );
+  }
+
 }
+
+///
+///
+///
+class InheritedObjects extends StatelessWidget {
+  final List<InheritedObject> entries;
+  final Widget child;
+  const InheritedObjects(this.entries, {super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return entries.reversed.skip(1).fold(
+      entries.last._copyWithChild(child),
+      (previous, current) => current._copyWithChild(previous)
+    ); // Chain the entries and return the final widget
+  }
+}
+
 
 ///
 ///

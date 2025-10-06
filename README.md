@@ -68,6 +68,7 @@ import 'package:inheriteds/inheriteds.dart';
       - [Static Methods for Safe Access](#static-methods-for-safe-access)
       - [Why is this better than aspect?](#why-is-this-better-than-aspect)
       - [`watchId` — what is it?](#watchid--what-is-it)
+    - [InheritedObjects](#inheritedobjects)
     - [InheritedProvider](#inheritedprovider)
       - [Static Methods](#static-methods)
       - [Provider's `notifier`](#providers-notifier)
@@ -239,6 +240,37 @@ Widget build(context) {
 
 > ObjectAspectError: ObjectValueAspect<num, ShopOrder>(id=null) is already registered in the same frame.
 
+### InheritedObjects
+
+`InheritedObjects` is a widget that lets you combine and provide multiple `InheritedObject` instances at once. This is especially useful when your widget tree depends on several objects and you want to keep your structure clean and organized.
+
+With `InheritedObjects`, you can:
+- Group multiple `InheritedObject` widgets for better structure
+- Avoid deeply nested widget trees
+
+For example, if your app needs to provide both a `User` and a `Settings` object to the widget tree, you can group them with `InheritedObjects`:
+
+```dart
+InheritedObjects(
+  [
+    InheritedObject<User>(
+      object: const User(name: "Bob", age: 21),
+    ),
+    InheritedObject<Settings>(
+      object: const Settings(theme: "dark"),
+    ),
+  ],
+  child: MyApp(),
+)
+```
+
+Now, any widget below can access both objects:
+
+```dart
+final user = InheritedObject.of<User>(context);
+final settings = InheritedObject.of<Settings>(context);
+```
+
 ### InheritedProvider
 
 `InheritedProvider` is a convenient widget for providing immutable objects to the widget tree and managing their updates. It eliminates manual wiring and boilerplate, making state sharing and dependency injection much simpler and more scalable.
@@ -312,19 +344,11 @@ This approach provides a flexible way to observe and respond to state changes ma
 
 ### InheritedProviders
 
-`InheritedProviders` is a widget that allows you to combine and provide multiple `InheritedProvider` instances in a single place. This is especially useful when your widget tree depends on several independent objects or states, and you want to keep your provider setup clean and organized.
-
-With `InheritedProviders`, you can:
-- Group multiple providers together for better structure
-- Avoid deeply nested provider widgets
-- Easily manage dependencies between different objects
-
-
-Suppose your app needs to provide both a `User` and a `Settings` object to the widget tree. You can group them with `InheritedProviders`:
+Similar to `InheritedObjects`, `InheritedProviders` allows you to combine and provide multiple `InheritedProvider` instances in a single place. This is especially useful when your widget tree depends on several independent objects or states, and you want to keep your provider setup clean and organized.
 
 ```dart
 InheritedProviders(
-  providers: [
+  [
     InheritedProvider<User>(
       initialObject: const User(name: "Bob", age: 21),
     ),
