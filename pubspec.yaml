@@ -1,6 +1,6 @@
 name: inheriteds
 description: "State management solution focused on simplifying dependency injection and object propagation throughout widget trees"
-version: 0.0.4
+version: 0.0.5
 homepage: https://github.com/dartius-dev/inheriteds
 repository: https://github.com/dartius-dev/inheriteds
 issue_tracker: https://github.com/dartius-dev/inheriteds/issues
@@ -19,7 +19,7 @@ dependencies:
   flutter:
     sdk: flutter
   equalone: ^1.2.1
-  dependents: ^0.1.2
+  dependents: ^0.2.0
 
 dev_dependencies:
   test: ^1.25.2

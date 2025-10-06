@@ -271,6 +271,23 @@ final user = InheritedObject.of<User>(context);
 final settings = InheritedObject.of<Settings>(context);
 ```
 
+`InheritedObjects` is also convenient when some objects may not always be available or accessible:
+
+```dart
+InheritedObjects(
+  [
+    if (user != null)
+      InheritedObject<User>(object: user!),
+    if (settings != null)
+      InheritedObject<Settings>(object: settings),
+  ],
+  child: MyApp(),
+)
+```
+
+This approach allows you to conditionally provide objects to the widget tree, ensuring that only available objects are inherited by descendant widgets.
+
+
 ### InheritedProvider
 
 `InheritedProvider` is a convenient widget for providing immutable objects to the widget tree and managing their updates. It eliminates manual wiring and boilerplate, making state sharing and dependency injection much simpler and more scalable.

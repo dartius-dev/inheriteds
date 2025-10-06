@@ -8,11 +8,9 @@ import 'package:flutter/widgets.dart';
 part 'inherited_object_provider.dart';
 part 'inherited_provider.dart';
 part 'inherited_provider_dependency.dart';
-part 'inherited_providers.dart';
 part 'inherited_hub.dart';
 
 
-typedef ContextBasedValue<T> = T Function(BuildContext context);
 typedef ObjectWatchCallback<T extends Object> = Object? Function(T? widget);
 typedef ValueWatchCallback<V, T extends Object> = V? Function(T? widget);
 
@@ -124,7 +122,7 @@ class InheritedObjects extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return entries.reversed.skip(1).fold(
+    return entries.isEmpty ? child : entries.reversed.skip(1).fold(
       entries.last._copyWithChild(child),
       (previous, current) => current._copyWithChild(previous)
     ); // Chain the entries and return the final widget
@@ -165,7 +163,8 @@ class InheritedObjectElement<T> extends InheritedElement {
             '${aspect.runtimeType}${switch(aspect){ final ObjectAspectMixin e => '(id=${e.id})', _=>''}} is already registered in the same frame. '
           );
         }
-        aspect = _DebugObjectAspect(aspect!, _frameCount);
+
+        aspect = _DebugObjectAspect(aspect!, _frameCount, StackTrace.current.toString());
         return true;
       }());
 
@@ -192,7 +191,8 @@ class InheritedObjectElement<T> extends InheritedElement {
 class _DebugObjectAspect<T extends Object> with AObjectAspect<T> {
   final AObjectAspect<T> aspect;
   final int frame;
-  const _DebugObjectAspect(this.aspect, this.frame);
+  final String? stack;
+  const _DebugObjectAspect(this.aspect, this.frame, this.stack);
 
   Object? get id => aspect.id;
 

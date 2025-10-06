@@ -97,7 +97,7 @@ class _ProviderDependencyState<TO, TD> extends DependencyState<TD, ProviderDepen
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildContent(BuildContext context) {
     return widget.child!;
   }
 }

@@ -1,7 +1,14 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.0.5]
+- Changed
+  - `InheritedProviders`: You can now specify empty `entries`.
+  - `InheritedObjects`: You can now specify empty `entries`.
+
 ## [0.0.4]
+
 - Changed
   - `InheritedProviders`: The `providers` parameter is now a positional argument and has been renamed to `entries`.
 - Added
