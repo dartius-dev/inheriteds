@@ -36,8 +36,8 @@ mixin InheritedProviderDependentStateMixin<T> on InheritedObjectProviderState<T>
   Widget buildChild(Widget child) {
     if (dependencies?.isNotEmpty ?? false) {
       child = dependencies!.reversed.skip(1).fold(
-        dependencies!.last._buildWith(child, this),
-        (previous, current) => current._buildWith(previous, this)
+        dependencies!.last.copyWithChild(child, this),
+        (previous, current) => current.copyWithChild(previous, this)
       ); // Chain the providers and return the final widget
     }
     return child;
@@ -47,7 +47,7 @@ mixin InheritedProviderDependentStateMixin<T> on InheritedObjectProviderState<T>
 ///
 ///
 ///
-class ProviderDependency<TO, TD> extends DependencyWidget<TD> with EqualoneMixin{
+final class ProviderDependency<TO, TD> extends DependencyWidget<TD> with EqualoneMixin{
 
   final TO Function(TO?, TD?) update;
 
@@ -59,10 +59,11 @@ class ProviderDependency<TO, TD> extends DependencyWidget<TD> with EqualoneMixin
   }) : _provider = null;
 
   @override
-  List<Object?> get equalones => [listenable, Equalone(listenableList), dependency, child, key];
+  List<Object?> get equalones => [listenable, Equalone.shallow(listenableList), dependency, child, key];
 
-  ProviderDependency<TO, TD> _buildWith(Widget child, InheritedProviderDependentStateMixin<TO> provider) {
-    return ProviderDependency<TO, TD>._(
+  @protected
+  ProviderDependency<TO, TD> copyWithChild(Widget child, InheritedProviderDependentStateMixin<TO> provider) {
+    return ProviderDependency<TO, TD>.constructor(
       listenable: listenable,
       listenableList: listenableList,
       dependency: dependency,
@@ -72,7 +73,7 @@ class ProviderDependency<TO, TD> extends DependencyWidget<TD> with EqualoneMixin
     );
   }
 
-  const ProviderDependency._({
+  const ProviderDependency.constructor({
     super.listenable,
     super.listenableList,
     required super.dependency,
@@ -91,9 +92,9 @@ class ProviderDependency<TO, TD> extends DependencyWidget<TD> with EqualoneMixin
 class _ProviderDependencyState<TO, TD> extends DependencyState<TD, ProviderDependency<TO, TD>> {
 
   @override
-  void updateDependency(TD? value) {
+  void updateDependency(TD value) {
     super.updateDependency(value);
-    widget._provider!.setObject(widget.update(widget._provider!.object, value));
+    Timer.run(()=>widget._provider!.setObject(widget.update(widget._provider!.object, value)));
   }
 
   @override

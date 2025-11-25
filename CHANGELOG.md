@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0]
+- Changed
+  - Improved handling of nullable values for `InheritedObject` 
+    - Added `InheritedObject.nullable`
+    - Nullable types are now forbidden for `InheritedObject<T>`,
+- Fixes:
+  - Fixed: `_ProviderDependencyState.updateDependency` sets the object during the build stage.
+  - Fixed: a late error when updating `InheritedObjectProviderState._hub`.
+
 ## [0.0.5]
 - Changed
   - `InheritedProviders`: You can now specify empty `entries`.

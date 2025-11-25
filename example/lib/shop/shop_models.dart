@@ -13,7 +13,7 @@ class ShopPrice with EqualoneMixin {
   }
   
   @override
-  List<Object?> get equalones => [Equalone(goods)];
+  List<Object?> get equalones => [Equalone.shallow(goods)];
 }
 
 ///
@@ -47,7 +47,7 @@ class ShopOrder with EqualoneMixin {
   }
   
   @override
-  List<Object?> get equalones => [Equalone(items)];
+  List<Object?> get equalones => [Equalone.shallow(items)];
 }
 
 ///

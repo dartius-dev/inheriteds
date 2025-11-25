@@ -136,9 +136,18 @@ class InheritedProviders extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return entries.isEmpty ? child : entries.reversed.skip(1).fold(
-      entries.last.copyWithChild(child),
-      (previous, current) => current.copyWithChild(previous)
+      _copyWithChild(entries.last, child),
+      (previous, current) => _copyWithChild(current, previous)
     ); // Chain the providers and return the final widget
+  }
+
+  InheritedObjectProvider _copyWithChild(InheritedObjectProvider provider, Widget child) {
+    final copy = provider.copyWithChild(child);
+    assert(
+      copy.runtimeType == provider.runtimeType,
+      '${provider.runtimeType}.copyWithChild() must return an instance of the same type, but ${copy.runtimeType} was returned.'
+    );
+    return copy;
   }
 }
 

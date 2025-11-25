@@ -126,7 +126,7 @@ class GoodCard extends StatelessWidget {
         ),
         trailing: Builder(
           builder: (context) {
-            final inCart = InheritedObject.valueOf<bool, ShopOrder>(context, value: (o) => o?.itemByName(name)!=null);
+            final inCart = InheritedObject.valueOf<bool, ShopOrder>(context, value: (o) => o.itemByName(name)!=null);
 
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -134,7 +134,7 @@ class GoodCard extends StatelessWidget {
                 if (!inCart) InkWell(
                   child: Icon(Icons.add_shopping_cart_rounded),
                   onTap: () => InheritedProvider.update<ShopOrder>(context, (object) {
-                    final price = InheritedObject.valueOf<int, ShopPrice>(context, value: (s) => s?.goods[name] ?? 0);
+                    final price = InheritedObject.valueOf<int, ShopPrice>(context, value: (s) => s.goods[name] ?? 0);
                     return object.updatedWith(ShopOrderItem(name, 1, price));
                   }),
                 ),
@@ -150,7 +150,7 @@ class GoodCard extends StatelessWidget {
         ),
         title: Text(name, style: Theme.of(context).textTheme.titleMedium),
         subtitle: Builder(builder: (context) {
-          final price = InheritedObject.valueOf<int,ShopPrice>(context, value: (s)=>s?.goods[name] ?? 0);
+          final price = InheritedObject.valueOf<int,ShopPrice>(context, value: (s)=>s.goods[name] ?? 0);
           return Text("\$$price", style: Theme.of(context).textTheme.labelMedium);
         }
         ),
@@ -171,9 +171,13 @@ class OrderItemCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: DependentBuilder(
-        dependency: (context) => InheritedObject.valueOf<ShopOrderItem,ShopOrder>(context, value: (o) => o!.itemByName(name)),
+        dependency: (context) {
+          return InheritedObject.valueOf<ShopOrderItem?,ShopOrder>(context, 
+            value: (o) => o.itemByName(name)
+          );
+        },
         builder: (context, _) {
-          final item = DependentBuilder.dependencyOf<ShopOrderItem>(context)!;
+          final item = DependentBuilder.dependencyOf<ShopOrderItem?>(context)!;
           final price = item.price;
           final quantity = item.quantity;
           final cost = item.cost;
@@ -223,7 +227,7 @@ class ShopOrderTotalCard extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final (itemCount, totalCost) = InheritedObject.valueOf<(int,int),ShopOrder>(context, 
-            value: (o) => (o!.items.length, o.items.fold<int>(0, (sum, item) => sum + item.cost))
+            value: (o) => (o.items.length, o.items.fold<int>(0, (sum, item) => sum + item.cost))
           );
           return ListTile(
             title: Text('$itemCount items', style: Theme.of(context).textTheme.titleMedium),

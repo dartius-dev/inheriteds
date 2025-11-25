@@ -108,14 +108,14 @@ class _HubEntry {
 ///
 ///
 ///
-class HubObjectAspect<T extends Object> with AObjectAspect<_HubScope> {
+class HubObjectAspect<T> with AObjectAspect<_HubScope> {
   
   @override
   Object? get id => objectAspect;
 
   Object? call(_HubScope? object) {
     final obj = object?.entries[T]?.object as T?;
-    return objectAspect==null ? obj : objectAspect!(obj);
+    return objectAspect==null ? obj : objectAspect!(obj as T);
   }
 
   final AObjectAspect<T>? objectAspect;
@@ -133,7 +133,7 @@ class HubObjectValueAspect<V,T extends Object> with AObjectAspect<T>, ObjectAspe
   ObjectWatchCallback<T> get watch => _watch ?? valueOf;
   
   @override
-  V? valueOf(T? object) => _value(object); 
+  V valueOf(T object) => _value(object); 
 
   const HubObjectValueAspect(this._value, {this.id, ObjectWatchCallback<T>? watch}) : _watch = watch;
 

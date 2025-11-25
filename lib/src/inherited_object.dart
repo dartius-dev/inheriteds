@@ -11,8 +11,8 @@ part 'inherited_provider_dependency.dart';
 part 'inherited_hub.dart';
 
 
-typedef ObjectWatchCallback<T extends Object> = Object? Function(T? widget);
-typedef ValueWatchCallback<V, T extends Object> = V? Function(T? widget);
+typedef ObjectWatchCallback<T extends Object> = Object? Function(T widget); 
+typedef ValueWatchCallback<V, T extends Object> = V Function(T widget);
 
 
 /// Simplifies the use of [InheritedWidget].
@@ -34,30 +34,45 @@ typedef ValueWatchCallback<V, T extends Object> = V? Function(T? widget);
 /// The object should be immutable and implement value equality to ensure proper equality checks.
 /// You may use [EqualoneMixin] from [equalone](https://pub.dev/packages/equalone) package or other solutions for this purpose.
 /// 
-/// Should not be used directly, use [InheritedProvider] instead.
+/// [InheritedObject] can be used directly, but typically [InheritedProvider] is preferred for most use cases.
 ///
 class InheritedObject<T> extends InheritedWidget {
 
-  final T object;
+  T get object => maybeObject!;
+  
+  final T? maybeObject;
+
   final AInheritedObjectProvider<T>? provider;
 
   const InheritedObject({
     super.key,
-    required this.object,
+    required T object,
     this.provider,
-    super.child = const SizedBox.shrink(),
-  });
+    super.child = emptyChild,
+  }) : maybeObject = object, assert(null is! T, 'Do not use nullable type in InheritedObject<$T>. Use InheritedObject.nullable instead.');
 
-  static T get<T extends Object>(BuildContext context) => find<T>(context)!;
+  /// Use this constructor to allow nullable types.
+  /// [InheritedObject] ARE NOT notifying dependents when the object changes to null.
+  /// 
+  const InheritedObject.nullable({
+    super.key,
+    required T? object,
+    this.provider,
+    super.child = emptyChild,
+  }) : maybeObject = object, assert(null is! T, 'Nullable $T should not be specified');
+
+  static T get<T extends Object>(BuildContext context) => find<T>(context) as T;
 
   static T? find<T extends Object>(BuildContext context) {
+   assert(null is! T, 'Type parameter T cannot be nullable.'); 
    if (context.getElementForInheritedWidgetOfExactType<InheritedObject<T>>()?.widget case InheritedObject<T> w) {
-      return w.object;
+      return w.maybeObject;
     }
     return InheritedHub._find(context)?.entries[T]?.object as T?;
   }
 
   static T? maybeOf<T extends Object>(BuildContext context, {ObjectWatchCallback<T>? watch, Object? watchId}) {
+    assert(null is! T, 'Type parameter T cannot be nullable.');
     ObjectAspect<T>? aspect = watch != null ? ObjectAspect<T>(watch: watch, id: watchId) : null;
     return _maybeOf<T>(context, aspect);
   }
@@ -65,23 +80,27 @@ class InheritedObject<T> extends InheritedWidget {
   static V? maybeValueOf<V,T extends Object>(BuildContext context, {
     required ValueWatchCallback<V,T> value, ObjectWatchCallback<T>? watch, Object? watchId
   }) {
+    assert(null is! T, 'Type parameter T cannot be nullable.');
     final aspect = ObjectValueAspect<V,T>(value, watch: watch ?? value, id: watchId);
-    return aspect.valueOf(_maybeOf<T>(context, aspect));
+    return switch(_maybeOf<T>(context, aspect)) {
+      T v => aspect.valueOf(v),
+      _   => null,
+    };
   }
 
-  static T  of<T extends Object>(BuildContext context, {ObjectWatchCallback<T>? watch, Object? watchId}) 
-    => maybeOf<T>(context, watch: watch, watchId: watchId)!;
+  static T of<T extends Object>(BuildContext context, {ObjectWatchCallback<T>? watch, Object? watchId}) 
+    => maybeOf<T>(context, watch: watch, watchId: watchId) as T;
 
   static V valueOf<V,T extends Object>(BuildContext context, {
     required ValueWatchCallback<V,T> value, ObjectWatchCallback<T>? watch, Object? watchId
-  }) => maybeValueOf<V,T>(context, value: value, watch: watch, watchId: watchId)!;
+  }) => maybeValueOf<V,T>(context, value: value, watch: watch, watchId: watchId) as V;
 
   static T? _maybeOf<T extends Object>(BuildContext context, [AObjectAspect<T>? aspect]) {
     if (
       context.dependOnInheritedWidgetOfExactType<InheritedObject<T>>(aspect: aspect) 
       case final io when io!=null
     ) {
-      return io.object;
+      return io.maybeObject;
     }
 
     return InheritedHub._maybeOf(context, HubObjectAspect<T>(aspect))?.entries[T]?.object as T?;
@@ -91,10 +110,10 @@ class InheritedObject<T> extends InheritedWidget {
   @override
   bool updateShouldNotify(InheritedObject<T> oldWidget) => shouldNotify(oldWidget);
 
-  bool shouldNotify(InheritedObject<T> oldWidget, [AObjectAspect? aspect]) {
-    return aspect!=null 
-      ? !Equalone.deepEquals(aspect(oldWidget.object), aspect(object))
-      : object!=oldWidget.object;
+  bool shouldNotify(InheritedObject<T> oldWidget, [AObjectAspect<T>? aspect]) {
+    return aspect==null || maybeObject==null || oldWidget.maybeObject==null
+      ? maybeObject != null && maybeObject != oldWidget.maybeObject
+      : !Equalone.deepEquals(aspect(oldWidget.object), aspect(object));
   }
 
   @override
@@ -102,14 +121,15 @@ class InheritedObject<T> extends InheritedWidget {
 
   
   InheritedObject<T> _copyWithChild(Widget child) {
-    return InheritedObject<T>(
+    return InheritedObject<T>.nullable(
       key: key,
-      object: object,
+      object: maybeObject,
       provider: provider,
       child: child,
     );
   }
 
+  static const Widget emptyChild = SizedBox.shrink();
 }
 
 ///
@@ -142,7 +162,7 @@ class InheritedObjectElement<T> extends InheritedElement {
   InheritedObject<T> get widget => super.widget as InheritedObject<T>;
 
   @override
-  void updateDependencies(Element dependent, covariant AObjectAspect? aspect) {
+  void updateDependencies(Element dependent, covariant AObjectAspect<T>? aspect) {
     final dependencies = getDependencies(dependent) as Set<AObjectAspect>?;
     if (dependencies?.isEmpty==true) {
       return;
@@ -179,7 +199,7 @@ class InheritedObjectElement<T> extends InheritedElement {
     if (dependencies == null) {
       return;
     }
-    if (dependencies.isEmpty || dependencies.any((aspect)=>widget.shouldNotify(oldWidget, aspect))){
+    if (dependencies.isEmpty || dependencies.any((aspect)=>widget.shouldNotify(oldWidget, aspect as AObjectAspect<T>))){
       dependent.didChangeDependencies();
     }
   }
@@ -188,7 +208,7 @@ class InheritedObjectElement<T> extends InheritedElement {
 }
 
 @immutable
-class _DebugObjectAspect<T extends Object> with AObjectAspect<T> {
+class _DebugObjectAspect<T> with AObjectAspect<T> {
   final AObjectAspect<T> aspect;
   final int frame;
   final String? stack;
@@ -197,7 +217,7 @@ class _DebugObjectAspect<T extends Object> with AObjectAspect<T> {
   Object? get id => aspect.id;
 
   @override
-  Object? call(T? object) {
+  Object? call(T object) {
     return aspect(object);
   }
 
@@ -215,12 +235,12 @@ class _DebugObjectAspect<T extends Object> with AObjectAspect<T> {
 ///
 ///
 ///
-abstract mixin class AObjectAspect<T extends Object> {
+abstract mixin class AObjectAspect<T> {
   /// [id] should be a value comparable with [operator==].
   /// Set [id] when using some dependencies in one build context.
   Object? get id;
 
-  Object? call(T? object);
+  Object? call(T object);
 
   @override
   bool operator ==(Object other) => other is AObjectAspect<T> && runtimeType==other.runtimeType && id==other.id;
@@ -229,8 +249,8 @@ abstract mixin class AObjectAspect<T extends Object> {
   int get hashCode => Object.hash(runtimeType, id);
 }
 
-mixin AObjectValueAspect<V,T extends Object> on AObjectAspect<T> {
-  V? valueOf(T? object); 
+mixin AObjectValueAspect<V,T> on AObjectAspect<T> {
+  V valueOf(T object); 
 }
 
 ///
@@ -258,7 +278,7 @@ class ObjectValueAspect<V,T extends Object> with AObjectAspect<T>, ObjectAspectM
   ObjectWatchCallback<T> get watch => _watch ?? valueOf;
   
   @override
-  V? valueOf(T? object) => _value(object); 
+  V valueOf(T object) => _value(object); 
 
   const ObjectValueAspect(this._value, {this.id, ObjectWatchCallback<T>? watch}) : _watch = watch;
 
@@ -273,7 +293,7 @@ mixin ObjectAspectMixin<T extends Object> on AObjectAspect<T> {
   ObjectWatchCallback<T>? get watch;
 
   @override
-  Object? call(T? object) => watch?.call(object);
+  Object? call(T object) => watch?.call(object);
 }
 
 ///

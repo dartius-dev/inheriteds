@@ -64,6 +64,7 @@ import 'package:inheriteds/inheriteds.dart';
     - [Problems Solved](#problems-solved)
   - [Usage](#usage)
     - [InheritedObject](#inheritedobject)
+      - [InheritedObject.nullable](#inheritedobjectnullable)
       - [Static Methods for Access](#static-methods-for-access)
       - [Static Methods for Safe Access](#static-methods-for-safe-access)
       - [Why is this better than aspect?](#why-is-this-better-than-aspect)
@@ -153,6 +154,31 @@ For most practical cases — especially when you want to reduce manual wiring an
 
 [InheritedProvider](#inheritedprovider) streamlines state sharing and updates throughout your widget tree, making your code cleaner and easier to maintain.
 
+
+#### InheritedObject.nullable
+
+`InheritedObject.nullable` is a convenient constructor for providing nullable objects to the widget tree. This is useful when the shared object might be absent or not yet initialized, and you want descendant widgets to handle the `null` case gracefully.
+
+```dart
+InheritedObject.nullable<User>(
+  object: maybeUser, // User? (nullable)
+  child: child,
+)
+```
+
+You can then safely access the object below:
+```dart
+final user = InheritedObject.maybeOf<User>(context);
+if (user != null) {
+  // Use user
+}
+```
+
+This pattern is especially helpful for authentication flows, async data loading, or any scenario where the object may be temporarily unavailable.
+
+**Note:** `InheritedObject` does **not** notify dependents when the object changes to `null`.
+
+
 #### Static Methods for Access
 `InheritedObject` offers static methods for accessing objects and values in your widget tree. These methods make it easy to retrieve shared state, and provide a powerful alternative to the `aspect` mechanism found in `InheritedModel`.
 
@@ -190,7 +216,7 @@ final totalPrice = InheritedObject.valueOf<int, ShopOrder>(
 );
 
 // Only rebuild when the total price crossing the threshold of 100
-final above = InheritedObject.valueOf<int, ShopOrder>(
+final above = InheritedObject.valueOf<bool, ShopOrder>(
   context, value: (order) => order.totalPrice > 100
 );
 ```
@@ -467,7 +493,7 @@ final shopOrderDependency = ProviderDependency<ShopOrder, ShopPrice>(
 );
 
 InheritedProviders(
-  providers: [
+  [
     InheritedProvider<ShopPrice>(
       initialObject: const ShopPrice({'Apple': 100, 'Banana': 50, 'Orange': 70}),
     ),

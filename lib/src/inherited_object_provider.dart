@@ -46,7 +46,7 @@ abstract class AInheritedObjectProvider<T> {
 ///
 abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProvider<T>> implements AInheritedObjectProvider<T> {
 
-  late final InheritedHubState? _hub;
+  InheritedHubState? _hub;
   late T _object = widget.initialObject;
   Type get _type => T;
 
