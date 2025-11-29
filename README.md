@@ -44,7 +44,7 @@ InheritedProvider.update<User>(context, (user) {
 Add to your `pubspec.yaml`:
 ```yaml
 dependencies:
-  inheriteds: 
+  inheriteds: <latest>
 ```
 
 Import in your Dart code:

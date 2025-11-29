@@ -112,7 +112,9 @@ class InheritedObject<T> extends InheritedWidget {
 
   bool shouldNotify(InheritedObject<T> oldWidget, [AObjectAspect<T>? aspect]) {
     return aspect==null || maybeObject==null || oldWidget.maybeObject==null
-      ? maybeObject != null && maybeObject != oldWidget.maybeObject
+      // The creator is responsible for ensuring correct object equality!
+      ? maybeObject != null && maybeObject != oldWidget.maybeObject 
+      // Perform deep object equality check for the aspect
       : !Equalone.deepEquals(aspect(oldWidget.object), aspect(object));
   }
 

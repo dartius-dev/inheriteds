@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1]
+- Changed
+  - dependency of 'inheriteds' package is updated
+
 ## [0.1.0]
 - Changed
   - Improved handling of nullable values for `InheritedObject` 
