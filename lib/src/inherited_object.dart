@@ -3,11 +3,16 @@ import 'dart:collection';
 
 import 'package:dependents/dependents.dart';
 import 'package:equalone/equalone.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'helpers.dart';
+
+part 'inherited_entry.dart';
 part 'inherited_object_provider.dart';
 part 'inherited_provider.dart';
 part 'inherited_provider_dependency.dart';
+part 'inherited_bridge.dart';
 part 'inherited_hub.dart';
 
 
@@ -36,13 +41,13 @@ typedef ValueWatchCallback<V, T extends Object> = V Function(T widget);
 /// 
 /// [InheritedObject] can be used directly, but typically [InheritedProvider] is preferred for most use cases.
 ///
-class InheritedObject<T> extends InheritedWidget {
+class InheritedObject<T> extends InheritedWidget with InheritedEntry {
 
   T get object => maybeObject!;
   
   final T? maybeObject;
 
-  final AInheritedObjectProvider<T>? provider;
+  final AInheritedObjectProviderState<T>? provider;
 
   const InheritedObject({
     super.key,
@@ -121,8 +126,8 @@ class InheritedObject<T> extends InheritedWidget {
   @override
   InheritedObjectElement<T> createElement() => InheritedObjectElement<T>(this);
 
-  
-  InheritedObject<T> _copyWithChild(Widget child) {
+  @override
+  InheritedObject<T> copyWithChild(Widget child) {
     return InheritedObject<T>.nullable(
       key: key,
       object: maybeObject,
@@ -134,22 +139,22 @@ class InheritedObject<T> extends InheritedWidget {
   static const Widget emptyChild = SizedBox.shrink();
 }
 
-///
-///
-///
-class InheritedObjects extends StatelessWidget {
-  final List<InheritedObject> entries;
-  final Widget child;
-  const InheritedObjects(this.entries, {super.key, required this.child});
+@Deprecated('Use `InheritedEntries` instead')
+typedef InheritedObjects = InheritedEntries;
 
-  @override
-  Widget build(BuildContext context) {
-    return entries.isEmpty ? child : entries.reversed.skip(1).fold(
-      entries.last._copyWithChild(child),
-      (previous, current) => current._copyWithChild(previous)
-    ); // Chain the entries and return the final widget
-  }
-}
+// ///
+// ///
+// ///
+// class InheritedObjects extends StatelessWidget {
+//   final List<InheritedObject> entries;
+//   final Widget child;
+//   const InheritedObjects(this.entries, {super.key, required this.child});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return child.chain(entries, (io, child) => io.copyWithChild(child));
+//   }
+// }
 
 
 ///

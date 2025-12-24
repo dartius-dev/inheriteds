@@ -2,6 +2,8 @@ import 'package:equalone/equalone.dart';
 import 'package:flutter/material.dart';
 import 'package:inheriteds/inheriteds.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'counters/common/counter.dart';
+import 'counters/inherited_bridge_counter_screen.dart';
 import 'counters/inherited_object_counter_screen.dart';
 import 'counters/inherited_provider_counter_screen.dart';
 import 'counters/set_state_counter_screen.dart';
@@ -33,7 +35,7 @@ class HomePageState extends State<HomePage> {
   static const githubProject = "https://github.com/dartius-dev/inheriteds/";
   static const githubExample = "${githubProject}blob/main/example/lib/";
 
-  static const screens = [
+  final screens = [
      ScreenItem(
       title: 'SetState',
       icon: Icon(Icons.looks_one),
@@ -41,22 +43,30 @@ class HomePageState extends State<HomePage> {
       url: "${githubExample}counters/set_state_counter_screen.dart"
     ),
     ScreenItem(
-      title: 'InheritedObject',
+      title: 'Object',
       icon: Icon(Icons.looks_two),
       widget: InheritedObjectCounterScreen(),
       url: "${githubExample}counters/inherited_object_counter_screen.dart"
     ),
     ScreenItem(
-      title: 'InheritedProvider',
+      title: 'Provider',
       icon: Icon(Icons.looks_3),
       widget: InheritedProviderCounterScreen(),
       url: "${githubExample}counters/inherited_provider_counter_screen.dart"
     ),
     ScreenItem(
-      title: 'InheritedHub',
+      title: 'Hub',
       icon: Icon(Icons.looks_4),
       widget: InheritedHubCounterScreen(),
+      fab: (context)=>CounterFloatingActionButton<HubCounter>(context: context),
       url: "${githubExample}counters/inherited_hub_counter_screen.dart"
+    ),
+    ScreenItem(
+      title: 'Bridge',
+      icon: Icon(Icons.looks_5),
+      widget: InheritedBridgeCounterScreen(),
+      fab: (context)=>CounterFloatingActionButton<BridgeCounter>(context: context),
+      url: "${githubExample}counters/inherited_bridge_counter_screen.dart"
     ),
     ScreenItem(
       title: 'Shop',
@@ -104,20 +114,7 @@ class HomePageState extends State<HomePage> {
                 ))
             .toList(),
       ),
-      floatingActionButton: screens[_selectedIndex].widget is! InheritedHubCounterScreen
-          ? null
-          : FloatingActionButton(
-              onPressed: () {
-                InheritedProvider.update<HubCounter>(context, (object) {
-                  return object.incremented();
-                });
-              },
-              tooltip: 'Hub usage',
-              child: Builder(builder: (context) {
-                final value = InheritedObject.maybeOf<HubCounter>(context)?.value ?? 0;
-                return Text('Hub:\n$value + 1');
-              }),
-            ),
+      floatingActionButton: screens[_selectedIndex].fab?.call(context),
     );
   }
 }
@@ -131,8 +128,9 @@ class ScreenItem with EqualoneMixin {
   final Widget icon;
   final Widget widget;
   final String? url;
+  final FloatingActionButton Function(BuildContext)? fab;
 
-  const ScreenItem({required this.title, required this.icon, this.url, required this.widget});
+  const ScreenItem({required this.title, required this.icon, this.url, required this.widget, this.fab});
 
   @override
   List<Object?> get equalones => [title, icon, url, widget];
@@ -167,4 +165,24 @@ class ScreenView extends StatelessWidget {
       ],
     );
   }
+}
+
+class CounterFloatingActionButton<T extends Counter> extends FloatingActionButton {
+  CounterFloatingActionButton({super.key, required BuildContext context}): super(
+      onPressed: () {
+        InheritedProvider.update<T>(context, (object) {
+          return object.incremented() as T;
+        }, or: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to update counter"), duration: const Duration(seconds: 1)),
+          );
+        });
+      },
+      tooltip: 'Hub usage',
+      child: Builder(builder: (context) {
+        final value = InheritedObject.maybeOf<T>(context)?.value ?? 0;
+        final name = '$T';
+        return Text('${name.substring(0, name.length - 7)}:\n$value + 1');
+      }),
+    );
 }

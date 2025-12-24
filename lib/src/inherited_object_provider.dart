@@ -5,7 +5,8 @@ part of 'inherited_object.dart';
 ///
 ///
 ///
-abstract class InheritedObjectProvider<T> extends StatefulWidget {
+///
+abstract class InheritedObjectProvider<T> extends StatefulWidget with EqualoneMixin, InheritedEntry {
 
   T get initialObject;
   
@@ -15,36 +16,42 @@ abstract class InheritedObjectProvider<T> extends StatefulWidget {
 
   const InheritedObjectProvider({super.key, this.child});
 
+  @override
   InheritedObjectProvider<T> copyWithChild(Widget child);
 
-  static P? of<T, P extends InheritedObjectProviderState<T>>(BuildContext context) 
+  static P of<T, P extends InheritedObjectProviderState<T>>(BuildContext context) 
       => maybeOf<T, P>(context)!;
       
   static P? maybeOf<T, P extends InheritedObjectProviderState<T>>(BuildContext context) {
     if (
       context.getElementForInheritedWidgetOfExactType<InheritedObject<T>>()?.widget 
-      case InheritedObject<T> w
+      case InheritedObject<T> io
     ) {
-      return w.provider is P ? w.provider as P : null;
+      return io.provider is P ? io.provider as P : null;
     }
 
     final hub = InheritedHub._find(context);
     return switch(hub?.entries[T]?.provider) { P state => state,  _ => null };
   }
+
+  @override
+  List<Object?> get equalones => [initialObject, hubEntry, child, key];
 }
 
 ///
 ///
 ///
-abstract class AInheritedObjectProvider<T> {
+abstract class AInheritedObjectProviderState<T> {
+  T get object;
 
+  ChangeNotifier get notifier;
 }
 
 
 ///
 ///
 ///
-abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProvider<T>> implements AInheritedObjectProvider<T> {
+abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProvider<T>> implements AInheritedObjectProviderState<T> {
 
   InheritedHubState? _hub;
   late T _object = widget.initialObject;
@@ -52,8 +59,10 @@ abstract class InheritedObjectProviderState<T> extends State<InheritedObjectProv
 
   Widget get child => widget.child!;
 
+  @override
   T get object => _object;
 
+  @override
   ChangeNotifier get notifier;
   
   @override

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0]
+- Added:
+  - `InheritedBridge`: Bridges inherited objects across different branches of the widget tree.
+  - `InheritedEntries`: Allows combining and providing multiple `InheritedEntry` instances at once, including:
+    - `InheritedObject`
+    - `InheritedObjectProvider` instances (`InheritedProvider`, `InheritedDataProvider`)
+    - `InheritedBridge`
+- Removed:
+  - `InheritedObjects` (use `InheritedEntries` instead)
+  - `InheritedProviders` (use `InheritedEntries` instead)
+- Updated:
+  - Example: Added usage of `InheritedBridge`.
+- Fixed:
+  - `InheritedObjectProvider.of`: Corrected return type.
+  - `ProviderDependency.update`: Fixed argument types.
+
 ## [0.1.1]
 - Changed
   - dependency of 'inheriteds' package is updated

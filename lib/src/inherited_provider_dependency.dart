@@ -35,10 +35,11 @@ mixin InheritedProviderDependentStateMixin<T> on InheritedObjectProviderState<T>
 
   Widget buildChild(Widget child) {
     if (dependencies?.isNotEmpty ?? false) {
-      child = dependencies!.reversed.skip(1).fold(
-        dependencies!.last.copyWithChild(child, this),
-        (previous, current) => current.copyWithChild(previous, this)
-      ); // Chain the providers and return the final widget
+      return child.chain(dependencies!, (dep, child) => dep.copyWithChild(child, this));
+      // child = dependencies!.reversed.skip(1).fold(
+      //   dependencies!.last.copyWithChild(child, this),
+      //   (previous, current) => current.copyWithChild(previous, this)
+      // ); 
     }
     return child;
   }
@@ -47,9 +48,9 @@ mixin InheritedProviderDependentStateMixin<T> on InheritedObjectProviderState<T>
 ///
 ///
 ///
-final class ProviderDependency<TO, TD> extends DependencyWidget<TD> with EqualoneMixin{
+final class ProviderDependency<TO, TD> extends DependencyWidget<TD> with EqualoneMixin {
 
-  final TO Function(TO?, TD?) update;
+  final TO Function(TO, TD) update;
 
   const ProviderDependency({
     super.listenable,

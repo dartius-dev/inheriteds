@@ -41,6 +41,9 @@ class InheritedProvider<T> extends InheritedDataProvider<T> {
   }
 
   @override
+  List<Object?> get equalones => [...super.equalones, onUpdate];
+
+  @override
   InheritedObjectProviderState<T> createState() => InheritedProviderState<T>();
 
 }
@@ -81,6 +84,13 @@ class InheritedDataProvider<T> extends InheritedObjectProvider<T> with Dependenc
     super.key, required this.initialObject, this.hubEntry = false, this.dependencies, super.child
   });
 
+  static InheritedDataProviderState<T>? maybeOf<T>(BuildContext context) {
+    return InheritedObjectProvider.maybeOf<T, InheritedDataProviderState<T>>(context);
+  }
+
+  static InheritedDataProviderState<T> of<T>(BuildContext context) 
+    => maybeOf<T>(context)!;
+
   @override
   InheritedDataProvider<T> copyWithChild(Widget child) {
     return InheritedDataProvider<T>(
@@ -91,6 +101,9 @@ class InheritedDataProvider<T> extends InheritedObjectProvider<T> with Dependenc
       child: child,
     );
   }
+
+  @override
+  List<Object?> get equalones => [...super.equalones, Equalone.shallow(dependencies)];
 
   @override
   InheritedObjectProviderState<T> createState() => InheritedDataProviderState<T>();
@@ -124,30 +137,30 @@ class InheritedDataProviderState<T>
   }
 }
 
+@Deprecated('Use `InheritedEntries` instead')
+typedef InheritedProviders = InheritedEntries;
 
-///
-///
-///
-class InheritedProviders extends StatelessWidget {
-  final List<InheritedObjectProvider> entries;
-  final Widget child;
-  const InheritedProviders(this.entries,{super.key, required this.child});
+// ///
+// ///
+// ///
+// class InheritedProviders extends StatelessWidget {
+//   final List<InheritedObjectProvider> entries;
+//   final Widget child;
+//   const InheritedProviders(this.entries,{super.key, required this.child});
 
-  @override
-  Widget build(BuildContext context) {
-    return entries.isEmpty ? child : entries.reversed.skip(1).fold(
-      _copyWithChild(entries.last, child),
-      (previous, current) => _copyWithChild(current, previous)
-    ); // Chain the providers and return the final widget
-  }
+//   @override
+//   Widget build(BuildContext context) {
+//     return child.chain(entries, _bind); 
+//   }
 
-  InheritedObjectProvider _copyWithChild(InheritedObjectProvider provider, Widget child) {
-    final copy = provider.copyWithChild(child);
-    assert(
-      copy.runtimeType == provider.runtimeType,
-      '${provider.runtimeType}.copyWithChild() must return an instance of the same type, but ${copy.runtimeType} was returned.'
-    );
-    return copy;
-  }
-}
+//   InheritedObjectProvider _bind(InheritedObjectProvider provider, Widget child) {
+//     final copy = provider.copyWithChild(child);
+//     assert(
+//       copy.runtimeType == provider.runtimeType,
+//       '${provider.runtimeType}.copyWithChild() must return an instance of the same type, but ${copy.runtimeType} was returned.'
+//     );
+//     return copy;
+//   }
+// }
+
 
