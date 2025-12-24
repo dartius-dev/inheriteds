@@ -58,14 +58,14 @@ class HomePageState extends State<HomePage> {
       title: 'Hub',
       icon: Icon(Icons.looks_4),
       widget: InheritedHubCounterScreen(),
-      fab: (context)=>CounterFloatingActionButton<HubCounter>(context: context),
+      fab: (context)=>CounterFloatingActionButton<HubCounter>(context: context, name: 'Hub'),
       url: "${githubExample}counters/inherited_hub_counter_screen.dart"
     ),
     ScreenItem(
       title: 'Bridge',
       icon: Icon(Icons.looks_5),
       widget: InheritedBridgeCounterScreen(),
-      fab: (context)=>CounterFloatingActionButton<BridgeCounter>(context: context),
+      fab: (context)=>CounterFloatingActionButton<BridgeCounter>(context: context, name: 'Bridge'),
       url: "${githubExample}counters/inherited_bridge_counter_screen.dart"
     ),
     ScreenItem(
@@ -168,7 +168,7 @@ class ScreenView extends StatelessWidget {
 }
 
 class CounterFloatingActionButton<T extends Counter> extends FloatingActionButton {
-  CounterFloatingActionButton({super.key, required BuildContext context}): super(
+  CounterFloatingActionButton({super.key, required BuildContext context, required String name}): super(
       onPressed: () {
         InheritedProvider.update<T>(context, (object) {
           return object.incremented() as T;
@@ -178,11 +178,10 @@ class CounterFloatingActionButton<T extends Counter> extends FloatingActionButto
           );
         });
       },
-      tooltip: 'Hub usage',
+      tooltip: '$name usage',
       child: Builder(builder: (context) {
         final value = InheritedObject.maybeOf<T>(context)?.value ?? 0;
-        final name = '$T';
-        return Text('${name.substring(0, name.length - 7)}:\n$value + 1');
+        return Text('$name:\n$value + 1');
       }),
     );
 }

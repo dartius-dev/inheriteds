@@ -69,13 +69,13 @@ import 'package:inheriteds/inheriteds.dart';
       - [Static Methods for Safe Access](#static-methods-for-safe-access)
       - [Why is this better than aspect?](#why-is-this-better-than-aspect)
       - [`watchId` — what is it?](#watchid--what-is-it)
-    - [InheritedObjects](#inheritedobjects)
     - [InheritedProvider](#inheritedprovider)
       - [Static Methods](#static-methods)
       - [Provider's `notifier`](#providers-notifier)
-    - [InheritedProviders](#inheritedproviders)
+    - [InheritedBridge](#inheritedbridge)
     - [InheritedHub](#inheritedhub)
       - [When does this really matter?](#when-does-this-really-matter)
+    - [InheritedEntries](#inheritedentries)
     - [ProviderDependency](#providerdependency)
     - [InheritedDataProvider](#inheriteddataprovider)
     - [InheritedObjectProvider](#inheritedobjectprovider)
@@ -95,6 +95,7 @@ Managing state and dependencies in Flutter can become cumbersome as applications
 - **InheritedObject**: A simple and convenient alternative to `InheritedModel` for any immutable object.
 - **InheritedProvider**: A generic provider for any object type, supporting dependency chains and updates.
 - **InheritedHub**: Centralized registry for providers, enabling global access and coordination.
+- **InheritedBridge**: Bridges inherited objects between separate branches of the widget tree.
 - **ProviderDependency**: Declarative dependency injection and update logic.
 
 ### Features
@@ -264,56 +265,6 @@ Widget build(context) {
 }
 ```
 
-> ObjectAspectError: ObjectValueAspect<num, ShopOrder>(id=null) is already registered in the same frame.
-
-### InheritedObjects
-
-`InheritedObjects` is a widget that lets you combine and provide multiple `InheritedObject` instances at once. This is especially useful when your widget tree depends on several objects and you want to keep your structure clean and organized.
-
-With `InheritedObjects`, you can:
-- Group multiple `InheritedObject` widgets for better structure
-- Avoid deeply nested widget trees
-
-For example, if your app needs to provide both a `User` and a `Settings` object to the widget tree, you can group them with `InheritedObjects`:
-
-```dart
-InheritedObjects(
-  [
-    InheritedObject<User>(
-      object: const User(name: "Bob", age: 21),
-    ),
-    InheritedObject<Settings>(
-      object: const Settings(theme: "dark"),
-    ),
-  ],
-  child: MyApp(),
-)
-```
-
-Now, any widget below can access both objects:
-
-```dart
-final user = InheritedObject.of<User>(context);
-final settings = InheritedObject.of<Settings>(context);
-```
-
-`InheritedObjects` is also convenient when some objects may not always be available or accessible:
-
-```dart
-InheritedObjects(
-  [
-    if (user != null)
-      InheritedObject<User>(object: user!),
-    if (settings != null)
-      InheritedObject<Settings>(object: settings),
-  ],
-  child: MyApp(),
-)
-```
-
-This approach allows you to conditionally provide objects to the widget tree, ensuring that only available objects are inherited by descendant widgets.
-
-
 ### InheritedProvider
 
 `InheritedProvider` is a convenient widget for providing immutable objects to the widget tree and managing their updates. It eliminates manual wiring and boilerplate, making state sharing and dependency injection much simpler and more scalable.
@@ -385,31 +336,23 @@ notifier.addListener(() {
 
 This approach provides a flexible way to observe and respond to state changes managed by `InheritedProvider`, making it easy to integrate with existing Flutter patterns.
 
-### InheritedProviders
+### InheritedBridge
 
-Similar to `InheritedObjects`, `InheritedProviders` allows you to combine and provide multiple `InheritedProvider` instances in a single place. This is especially useful when your widget tree depends on several independent objects or states, and you want to keep your provider setup clean and organized.
+`InheritedBridge` allows you to take an `InheritedObject` from one context and provide it to another part of the widget tree. This is especially useful when you need to share inherited data across different branches, such as when navigating to a new route or displaying a dialog where the context is different.
 
-```dart
-InheritedProviders(
-  [
-    InheritedProvider<User>(
-      initialObject: const User(name: "Bob", age: 21),
-    ),
-    InheritedProvider<Settings>(
-      initialObject: const Settings(theme: "dark"),
-    ),
-  ],
-  child: MyApp(),
-)
-```
-
-Now, any widget below can access both objects:
+Use `InheritedBridge` to bridge inherited objects between separate parts of your widget tree, ensuring that shared data remains accessible even when the widget hierarchy changes.
 
 ```dart
-final user = InheritedObject.of<User>(context);
-final settings = InheritedObject.of<Settings>(context);
+Navigator.of(context).push(
+  MaterialPageRoute<void>( 
+    builder: (BuildContext context) =>  
+      InheritedBridge<User>(
+        fromContext: context
+        child: YourWidget(),
+      ), 
+  ),
+);
 ```
-
 
 ### InheritedHub
 
@@ -467,6 +410,71 @@ With `InheritedHub` and `InheritedProvider(hubEntry: true)`, you never lose conn
 
 > Don't forget to set `hubEntry: true` in `InheritedProvider` to enable global access.
 
+
+### InheritedEntries
+
+`InheritedEntries` is a widget that lets you combine and provide multiple `InheritedObject` instances at once. This is especially useful when your widget tree depends on several objects and you want to keep your structure clean and organized.
+
+With `InheritedEntries`, you can:
+- Group multiple `InheritedObject` widgets for better structure
+- Avoid deeply nested widget trees
+
+For example, if your app needs to provide both a `User` and a `Settings` object to the widget tree, you can group them with `InheritedEntries`:
+
+```dart
+InheritedEntries(
+  [
+    InheritedObject<User>(
+      object: const User(name: "Bob", age: 21),
+    ),
+    InheritedObject<Settings>(
+      object: const Settings(theme: "dark"),
+    ),
+  ],
+  child: MyApp(),
+)
+```
+
+Now, any widget below can access both objects:
+
+```dart
+final user = InheritedObject.of<User>(context);
+final settings = InheritedObject.of<Settings>(context);
+```
+
+`InheritedEntries` is also convenient when some objects may not always be available or accessible:
+
+```dart
+InheritedEntries(
+  [
+    if (user != null)
+      InheritedObject<User>(object: user!),
+    if (settings != null)
+      InheritedObject<Settings>(object: settings),
+  ],
+  child: MyApp(),
+)
+```
+
+This approach allows you to conditionally provide objects to the widget tree, ensuring that only available objects are inherited by descendant widgets.
+
+Even more, `InheritedEntries` can work seamlessly with `InheritedProvider` and `InheritedBridge`:
+
+```dart
+Navigator.of(context).push(
+  MaterialPageRoute<void>(
+    builder: (BuildContext context) =>
+      InheritedEntries(
+        [
+          InheritedObject<User>(object: user!),
+          InheritedBridge<Setting>(fromContext: context),
+          InheritedProvider<ShopOrder>(initialObject: const ShopOrder([])),
+        ],
+        child: YourWidget(),
+      ),
+  ),
+);
+```
 
 
 ### ProviderDependency
